@@ -133,7 +133,6 @@ joinByChar() {
 }
 
 yaml_files=()
-local_yaml="poky-$(hostname).yaml"
 OLD_IFS=$IFS
 IFS=':'
 for file in ${yaml_file};
@@ -141,6 +140,8 @@ do
         yaml_files+=("${file}");
         [ -f "${file}" ] || fatal "${file} does not exist"
 done 
+config_dir=$(dirname "$(realpath "${yaml_files[0]}")")
+local_yaml="${config_dir}/poky-$(hostname).yaml"
 yaml_files+=("${local_yaml}");
 IFS=${OLD_IFS}
 
