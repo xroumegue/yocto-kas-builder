@@ -140,6 +140,18 @@ do
         yaml_files+=("${file}");
         [ -f "${file}" ] || fatal "${file} does not exist"
 done 
+shopt -s extglob
+build_name=${yaml_files[0]}
+build_name=${build_name%.*}
+build_name=${build_name##*/}
+build_name=${build_name//*(-poky)*(-kas)/}
+shopt -u extglob
+
+KAS_WORK_DIR=$(pwd)
+KAS_BUILD_DIR="${KAS_WORK_DIR}/build-${build_name}"
+export KAS_WORK_DIR
+export KAS_BUILD_DIR
+
 config_dir=$(dirname "$(realpath "${yaml_files[0]}")")
 local_yaml="${config_dir}/poky-$(hostname).yaml"
 yaml_files+=("${local_yaml}");
