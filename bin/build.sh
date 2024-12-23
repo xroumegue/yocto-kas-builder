@@ -153,7 +153,7 @@ export KAS_WORK_DIR
 export KAS_BUILD_DIR
 
 config_dir=$(dirname "$(realpath "${yaml_files[0]}")")
-local_yaml="${config_dir}/poky-$(hostname).yaml"
+local_yaml="${config_dir}/.host-$(hostname).yaml"
 yaml_files+=("${local_yaml}");
 IFS=${OLD_IFS}
 
