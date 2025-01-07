@@ -40,6 +40,8 @@ cat << EOF
         --prserver
             PR server host and server
             Default to "${ip_addr}:8585"
+        --ntpserver
+            ntpserver to set in the NTP recipe
 
     Possible commands:
         checkout
@@ -53,7 +55,7 @@ EOF
 
 
 opts_short=vh
-opts_long=verbose,help,update,force,kas_container:,sstatedir:,downloaddir:,sstatedir_mirror:,downloaddir_mirror:,hashserver:,prserver:
+opts_long=verbose,help,update,force,kas_container:,sstatedir:,downloaddir:,sstatedir_mirror:,downloaddir_mirror:,hashserver:,prserver:,ntpserver:
 
 options=$(getopt -o ${opts_short} -l ${opts_long} -- "$@" )
 
@@ -108,6 +110,11 @@ while true; do
             shift
             prserver=$1
             ;;
+        --ntpserver)
+            shift
+            ntpserver=$1
+            ;;
+
         --)
             shift
             break
@@ -172,6 +179,7 @@ sstatedir_mirror_default=${SSTATEDIR_MIRROR_DEFAULT:-/srv/jenkins/sstate-cache}
 downloaddir_mirror_default=${DOWNLOADDIR_MIRROR_DEFAULT:-/srv/jenkins/downloads}
 hashserver_default="${ip_addr}:8686"
 prserver_default="${ip_addr}:8585"
+ntpserver_default=${NTPSERVER_DEFAULT:-pool.ntp.org}
 
 sstatedir=${sstatedir:-${sstatedir_default}}
 downloaddir=${downloaddir:-${downloaddir_default}}
@@ -180,6 +188,7 @@ downloaddir_mirror=${downloaddir_mirror:-${downloaddir_mirror_default}}
 
 hashserver=${hashserver:-${hashserver_default}}
 prserver=${prserver:-${prserver_default}}
+ntpserver=${ntpserver:-${ntpserver_default}}
 
 builddir=${KAS_BUILD_DIR:-${rootdir}/build}
 machine=genericarm64
@@ -226,6 +235,12 @@ EOF
         export DL_DIR=${downloaddir:-downloaddir_default}
         export SSTATE_DIR=${sstatedir:-sstatedir_default}
 fi
+
+cat >> "${local_yaml}" <<EOF
+
+  ntp_server: |
+    CONF_NTP_SERVER = "${ntpserver}"
+EOF
 
 if [[ "${update}" == "true" ]];then
   cmd_args+=("--update")
