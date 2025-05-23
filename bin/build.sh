@@ -42,6 +42,8 @@ cat << EOF
             Default to "${ip_addr}:8585"
         --ntpserver
             ntpserver to set in the NTP recipe
+        --disable_connectivity_check
+            disable connectivity check
 
     Possible commands:
         checkout
@@ -55,7 +57,7 @@ EOF
 
 
 opts_short=vh
-opts_long=verbose,help,update,force,kas_container:,sstatedir:,downloaddir:,sstatedir_mirror:,downloaddir_mirror:,hashserver:,prserver:,ntpserver:
+opts_long=verbose,help,update,force,kas_container:,sstatedir:,downloaddir:,sstatedir_mirror:,downloaddir_mirror:,hashserver:,prserver:,ntpserver:,disable_connectivity_check
 
 options=$(getopt -o ${opts_short} -l ${opts_long} -- "$@" )
 
@@ -114,7 +116,9 @@ while true; do
             shift
             ntpserver=$1
             ;;
-
+        --disable_connectivity_check)
+            disable_connectivity_check=true
+            ;;
         --)
             shift
             break
@@ -169,6 +173,7 @@ yaml_files_string=$(joinByChar ':' "${yaml_files[@]}")
 verbose=${verbose:-false}
 force=${force:-false}
 update=${update:-false}
+disable_connectivity_check=${disable_connectivity_check:-false}
 
 kas_container_default=${KAS_CONTAINER:-kas-container}
 kas_container=${kas_container:-${kas_container_default}}
@@ -241,6 +246,14 @@ cat >> "${local_yaml}" <<EOF
   ntp_server: |
     CONF_NTP_SERVER = "${ntpserver}"
 EOF
+
+if [[ "${disable_connectivity_check}" == "true" ]]; then
+cat >> "${local_yaml}" <<EOF
+
+  sanity: |
+    CONNECTIVITY_CHECK_URIS = ""
+EOF
+fi
 
 if [[ "${update}" == "true" ]];then
   cmd_args+=("--update")
