@@ -34,6 +34,9 @@ cat << EOF
         --downloaddir_mirror
             Yocto download mirror directory
             Fallback to DOWNLOADDIR_MIRROR_DEFAULT if set, otherwise /srv/jenkins/downloads
+        --packagesdir
+            Binaries packages directory
+            Fallback to /var/ww/html/yocto
         --hashserver
             Hash server host and server
             Default to "${ip_addr}:8686"
@@ -52,12 +55,13 @@ cat << EOF
         sdk
         deploy
         deploy-sdk
+        deploy-packages
 EOF
 }
 
 
 opts_short=vh
-opts_long=verbose,help,update,force,kas_container:,sstatedir:,downloaddir:,sstatedir_mirror:,downloaddir_mirror:,hashserver:,prserver:,ntpserver:,disable_connectivity_check
+opts_long=verbose,help,update,force,kas_container:,sstatedir:,downloaddir:,sstatedir_mirror:,downloaddir_mirror:,hashserver:,prserver:,ntpserver:,disable_connectivity_check,packagesdir:
 
 options=$(getopt -o ${opts_short} -l ${opts_long} -- "$@" )
 
@@ -103,6 +107,10 @@ while true; do
         --downloaddir_mirror)
             shift
             downloaddir_mirror=$1
+            ;;
+        --packagesdir)
+            shift
+            packagesdir=$1
             ;;
         --hashserver)
             shift
@@ -185,11 +193,13 @@ downloaddir_mirror_default=${DOWNLOADDIR_MIRROR_DEFAULT:-/srv/jenkins/downloads}
 hashserver_default="${ip_addr}:8686"
 prserver_default="${ip_addr}:8585"
 ntpserver_default=${NTPSERVER_DEFAULT:-pool.ntp.org}
+packagesdir_default=${PACKAGESDIR_DEFAULT:-/var/www/html/yocto}
 
 sstatedir=${sstatedir:-${sstatedir_default}}
 downloaddir=${downloaddir:-${downloaddir_default}}
 sstatedir_mirror=${sstatedir_mirror:-${sstatedir_mirror_default}}
 downloaddir_mirror=${downloaddir_mirror:-${downloaddir_mirror_default}}
+packagesdir=${packagesdir:-${packagesdir_default}}
 
 hashserver=${hashserver:-${hashserver_default}}
 prserver=${prserver:-${prserver_default}}
@@ -306,6 +316,28 @@ function do_deploy_sdk {
     sudo "${sdkimage}" -y -d "${sdkdir}/${sdkversion}"
 }
 
+function do_deploy_packages {
+  echo "Deploying packages"
+  distro_version=$(get_distro_version)
+  echo "Yocto version ${distro_version} detected"
+
+  for item in "rpm" "deb";
+  do
+  if [ -d "${KAS_BUILD_DIR}/tmp/deploy/${item}" ]; then
+    full_packagesdir="${packagesdir}/${item}/${distro_version}"
+    mkdir -p "${full_packagesdir}"
+    echo "Synchronizing ${item} packages"
+    rsync -arz --exclude=x86_64* --exclude=sdk-* "${KAS_BUILD_DIR}/tmp/deploy/${item}/" "${full_packagesdir}/"
+    createrepo "${full_packagesdir}"
+  fi
+  done
+}
+
+function get_distro_version {
+  poky_conf=${KAS_WORK_DIR}/poky/meta-poky/conf/distro/poky.conf
+  grep -oP 'DISTRO_VERSION\s*=\s*"\K[0-9]+\.[0-9]+' "${poky_conf}"
+}
+
 case "$cmd" in
 "build")
         do_kas_cmd build
@@ -328,6 +360,9 @@ case "$cmd" in
 ;;
 "deploy-sdk")
         do_deploy_sdk
+;;
+"deploy-packages")
+        do_deploy_packages
 ;;
 
 
