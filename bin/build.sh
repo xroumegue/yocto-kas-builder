@@ -209,7 +209,7 @@ builddir=${KAS_BUILD_DIR:-${rootdir}/build}
 machine=genericarm64
 image=core-image-weston
 installdir=/srv/nfs/yocto/${machine}
-sdkdir=/srv/sdk
+sdkdir=/srv/sdk/yocto
 
 cmd_args=()
 kas_args=()
