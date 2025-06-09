@@ -327,7 +327,7 @@ function do_deploy_packages {
     full_packagesdir="${packagesdir}/${item}/${distro_version}"
     mkdir -p "${full_packagesdir}"
     echo "Synchronizing ${item} packages"
-    rsync -arz --exclude=x86_64* --exclude=sdk-* "${KAS_BUILD_DIR}/tmp/deploy/${item}/" "${full_packagesdir}/"
+    rsync -arz "${KAS_BUILD_DIR}/tmp/deploy/${item}/" "${full_packagesdir}/"
     createrepo "${full_packagesdir}"
   fi
   done
